@@ -1,0 +1,2 @@
+import { CoupleNote, Member } from '../types';
+export function noteSummary(notes:CoupleNote[],members:Member[]){const sent=members.map(m=>({name:m.name,count:notes.filter(n=>n.author_id===m.user_id&&n.status!=='deleted').length}));const favorites=notes.filter(n=>n.is_favorite&&n.status!=='deleted').length;const categories=notes.reduce<Record<string,number>>((a,n)=>{if(n.category)a[n.category]=(a[n.category]||0)+1;return a;},{});const topCategory=Object.entries(categories).sort((a,b)=>b[1]-a[1])[0]?.[0]??'Sin categoría';return {sent,favorites,topCategory};}

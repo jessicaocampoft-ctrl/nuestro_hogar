@@ -1,0 +1,12 @@
+export type UUID = string;
+export type Profile = { id:UUID; user_id:UUID; name:string; email:string; group_id?:UUID|null };
+export type Group = { id:UUID; name:string; invite_code:string; created_by:UUID };
+export type SplitType = 'equal'|'percentage'|'fixed'|'individual';
+export type ExpenseSplit = { user_id:UUID; amount_owed:number; percentage?:number|null; user_name?:string };
+export type Expense = { id:UUID; group_id:UUID; paid_by:UUID; payer_name?:string; amount:number; category:string; description:string; expense_date:string; split_type:SplitType; notes?:string|null; expense_splits:ExpenseSplit[] };
+export type TaskStatus = 'pending'|'completed'|'overdue';
+export type Assignee = UUID|'both';
+export type HouseholdTask = { id:UUID; group_id:UUID; title:string; description?:string|null; task_date:string; frequency:'once'|'daily'|'weekly'|'biweekly'|'monthly'; assigned_to:Assignee; assigned_name?:string; completed_by?:Assignee|null; completed_name?:string; status:TaskStatus; completed_at?:string|null; notes?:string|null };
+export type NoteStatus = 'visible'|'archived'|'deleted';
+export type CoupleNote = { id:UUID; group_id:UUID; author_id:UUID; author_name?:string; recipient_id:Assignee; recipient_name?:string; title?:string|null; message:string; category?:string|null; emoji?:string|null; status:NoteStatus; is_favorite:boolean; is_read:boolean; read_at?:string|null; created_at:string };
+export type Member = { user_id:UUID; name:string; email?:string };

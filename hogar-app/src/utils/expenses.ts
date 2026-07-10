@@ -1,0 +1,12 @@
+import { Expense, ExpenseSplit, Member, SplitType } from '../types';
+import { formatCOP } from './currency';
+export function calculateSplits(amount:number,type:SplitType,members:Member[],values?:Record<string,number>,individualId?:string):ExpenseSplit[]{
+  if(amount<=0) throw new Error('El valor debe ser mayor a cero');
+  if(type==='equal'){ const first=Math.floor(amount/members.length); return members.map((m,i)=>({user_id:m.user_id,user_name:m.name,amount_owed:i===members.length-1?amount-first*i:first,percentage:100/members.length})); }
+  if(type==='individual'){ if(!individualId) throw new Error('Selecciona quién asume el gasto'); return members.map(m=>({user_id:m.user_id,user_name:m.name,amount_owed:m.user_id===individualId?amount:0,percentage:m.user_id===individualId?100:0})); }
+  const nums=members.map(m=>values?.[m.user_id]??0); const expected=type==='percentage'?100:amount; const sum=nums.reduce((a,b)=>a+b,0); if(Math.abs(sum-expected)>.01) throw new Error(type==='percentage'?'Los porcentajes deben sumar 100%':'Los montos deben sumar el valor total');
+  return members.map((m,i)=>({user_id:m.user_id,user_name:m.name,amount_owed:type==='percentage'?amount*nums[i]/100:nums[i],percentage:type==='percentage'?nums[i]:amount?nums[i]/amount*100:0}));
+}
+export function expenseCompensation(e:Expense,members:Member[]){ const payer=members.find(m=>m.user_id===e.paid_by); const debtors=e.expense_splits.filter(s=>s.user_id!==e.paid_by&&s.amount_owed>0); if(!payer||!debtors.length)return 'No hay deuda en este gasto'; return debtors.map(d=>`${members.find(m=>m.user_id===d.user_id)?.name??'La otra persona'} le debe a ${payer.name} ${formatCOP(d.amount_owed)}`).join(' · '); }
+export function monthlyBalance(expenses:Expense[],members:Member[]){ const rows=members.map(m=>{const paid=expenses.filter(e=>e.paid_by===m.user_id).reduce((s,e)=>s+e.amount,0);const owed=expenses.flatMap(e=>e.expense_splits).filter(x=>x.user_id===m.user_id).reduce((s,x)=>s+x.amount_owed,0);return {...m,paid,owed,balance:paid-owed};});const creditor=rows.find(r=>r.balance>.005),debtor=rows.find(r=>r.balance<-.005);return {total:expenses.reduce((s,e)=>s+e.amount,0),rows,message:creditor&&debtor?`${debtor.name} le debe a ${creditor.name} ${formatCOP(Math.min(creditor.balance,-debtor.balance))}`:'Están a paz y salvo'}; }
+export const inMonth=(date:string,month:Date)=>{const d=new Date(date+'T12:00:00');return d.getFullYear()===month.getFullYear()&&d.getMonth()===month.getMonth();};
